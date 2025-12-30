@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { Product, Source, IdentifierType } from '../types';
+import { Product, Source, IdentifierType } from '@/types';
 
 interface DesignViewProps {
   products: Product[];
@@ -17,11 +17,11 @@ const DesignView: React.FC<DesignViewProps> = ({ products, setProducts, sources,
   const addProduct = () => {
     if (!newProductName || !newIdentifierValue) return;
     const newId = Math.random().toString(36).substr(2, 9);
-    setProducts([...products, { 
-      id: newId, 
-      name: newProductName, 
-      identifierType: identifierType, 
-      identifierValue: newIdentifierValue 
+    setProducts([...products, {
+      id: newId,
+      name: newProductName,
+      identifierType: identifierType,
+      identifierValue: newIdentifierValue
     }]);
     setNewProductName('');
     setNewIdentifierValue('');
@@ -52,7 +52,7 @@ const DesignView: React.FC<DesignViewProps> = ({ products, setProducts, sources,
             />
           </div>
           <div className="flex gap-2 md:col-span-2">
-            <select 
+            <select
               className="border p-2 rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-semibold"
               value={identifierType}
               onChange={(e) => setIdentifierType(e.target.value as IdentifierType)}

@@ -1,17 +1,15 @@
 ---
-description: GitHub workflow using MCP server for issue management and deployments
+description: GitHub workflow using MCP server for issue management
 ---
 
-# GitHub & Deployment Workflow
+# GitHub Workflow
 
 ## Quick Reference
 
 | Action | Command |
 |--------|---------|
-| Deploy Frontend | `git push` (auto via Cloudflare Pages) |
-| Deploy Backend | `cd backend && npx wrangler deploy` |
-| List Issues | `mcp_github_list_issues({ owner: 'Conner1209', repo: 'SzarBlog', state: 'open', per_page: 30 })` |
-| Close Issue | `mcp_github_update_issue({ owner: 'Conner1209', repo: 'SzarBlog', issue_number: X, state: 'closed' })` |
+| List Issues | `mcp_github_list_issues({ owner: 'Conner1209', repo: 'PriceTracker', state: 'open', per_page: 30 })` |
+| Close Issue | `mcp_github_update_issue({ owner: 'Conner1209', repo: 'PriceTracker', issue_number: X, state: 'closed' })` |
 
 ---
 
@@ -25,31 +23,29 @@ description: GitHub workflow using MCP server for issue management and deploymen
 npm run build
 npm test
 
-# Backend
+# Backend (Python)
 cd backend
-npx tsc --noEmit
-npm test
+python -m pytest
 ```
 
 ### 2. Manual Verification
-- **Ask user to verify** on dev server or production
+- **Ask user to verify** on dev server
 - **Wait for confirmation** before proceeding
 - Especially important for:
-  - API changes (may need `wrangler deploy` first!)
+  - API changes
   - UI changes
-  - Breaking changes
+  - Scraper logic changes
 
 ### 3. Provide Commit Message
 Use conventional commits format with bullet points:
 ```
-feat: add visual image cropping tool
+feat: add price history chart
 
-• Implement CropOverlay modal with 4:3 aspect ratio
-• Add thematic accents (Sky/Amber) based on post type
-• Integrate cropping into imageResize utility and useImageUpload hook
-• Update CreatePostTab to trigger cropper on file drop/selection
+• Implement line chart with Recharts
+• Add 30/60/90 day range selector
+• Display min/max/avg stats
 
-Closes #15
+Closes #5
 ```
 
 **Format Rules:**
@@ -65,7 +61,7 @@ Closes #15
 // 1. Add summary comment
 mcp_github_add_issue_comment({
     owner: 'Conner1209',
-    repo: 'SzarBlog',
+    repo: 'PriceTracker',
     issue_number: X,
     body: '## ✅ Completed\n\n[summary of changes]'
 })
@@ -73,7 +69,7 @@ mcp_github_add_issue_comment({
 // 2. Close the issue
 mcp_github_update_issue({
     owner: 'Conner1209',
-    repo: 'SzarBlog',
+    repo: 'PriceTracker',
     issue_number: X,
     state: 'closed'
 })
@@ -90,7 +86,7 @@ mcp_github_update_issue({
 // Always use per_page: 30 to avoid truncation
 mcp_github_list_issues({ 
     owner: 'Conner1209', 
-    repo: 'SzarBlog', 
+    repo: 'PriceTracker', 
     state: 'open',
     per_page: 30
 })
@@ -109,49 +105,11 @@ The user manages issues via a GitHub Project board (kanban style). **Moving card
 ```typescript
 mcp_github_create_issue({
     owner: 'Conner1209',
-    repo: 'SzarBlog',
+    repo: 'PriceTracker',
     title: 'Add dark mode toggle',
     body: '## Overview\n...',
     labels: ['frontend', 'priority: medium']
 })
-```
-
-### Project Board Note
-The user uses a GitHub Project board (kanban). **Moving cards does NOT close issues** - they remain "open" until explicitly closed via API or web UI.
-
----
-
-## Deployment
-
-### Frontend (Cloudflare Pages)
-**Auto-deploys on push to `main`**
-
-```bash
-git add .
-git commit -m "feat: your feature"
-git push
-```
-
-- Builds via Vite
-- Deploys to https://szarblog.pages.dev
-- Live in ~2 minutes
-
-### Backend (Cloudflare Workers)
-**Manual deployment required**
-
-```bash
-cd backend
-npx wrangler deploy
-```
-
-- Deploys to https://szarblog-api.conner1209.workers.dev
-- Required for API changes to take effect!
-
-### Secrets Management
-```bash
-npx wrangler secret put ADMIN_PASSWORD
-npx wrangler secret put OPENWEATHER_API_KEY
-npx wrangler secret put GEMINI_API_KEY
 ```
 
 ---
@@ -177,10 +135,10 @@ Include `Closes #X` in commit body to auto-close issues on push.
 | Label | Description |
 |-------|-------------|
 | `frontend` | React components, UI, styling |
-| `backend` | Cloudflare Worker, API endpoints, D1, R2 |
-| `admin` | Admin panel features |
-| `database` | D1 schema, migrations, queries |
-| `infrastructure` | Deployment, CI/CD, configuration |
+| `backend` | Python API, Flask/FastAPI endpoints |
+| `scraper` | Price scraping logic, parsers |
+| `database` | SQLite schema, queries |
+| `infrastructure` | Deployment, systemd, nginx |
 
 ### Type
 | Label | Description |
@@ -191,11 +149,8 @@ Include `Closes #X` in commit body to auto-close issues on push.
 | `refactor` | Code cleanup, no new features |
 | `documentation` | Improvements or additions to documentation |
 | `research` | Investigation/exploration needed |
-| `security` | Security related tasks |
 | `tech-debt` | Code cleanup and maintenance |
 | `testing` | Test coverage and quality |
-| `dx` | Developer experience improvements |
-| `ai` | AI-related features |
 
 ### Priority
 | Label | Description |
@@ -203,7 +158,6 @@ Include `Closes #X` in commit body to auto-close issues on push.
 | `priority: high` | Blocking or critical |
 | `priority: medium` | Important but not urgent |
 | `priority: low` | Nice to have |
-| `low priority` | (legacy) |
 
 ### Effort
 | Label | Description |
@@ -217,37 +171,10 @@ Include `Closes #X` in commit body to auto-close issues on push.
 |-------|-------------|
 | `blocked` | Waiting on something else |
 | `help wanted` | Extra attention is needed |
-| `good first issue` | Good for newcomers |
-
-### Meta (GitHub defaults)
-| Label | Description |
-|-------|-------------|
-| `duplicate` | This issue or pull request already exists |
-| `invalid` | This doesn't seem right |
-| `question` | Further information is requested |
-| `wontfix` | This will not be worked on |
-
----
-
-## Troubleshooting
-
-### Posts not loading after API changes
-**Cause:** Backend not deployed, frontend expects new response format
-**Fix:** `cd backend && npx wrangler deploy`
-
-### Login not working
-**Cause:** Auth cookie or response format mismatch
-**Fix:** Check AuthContext uses `result.data.user` (not `result.user`)
-
-### MCP commands failing
-- Verify repo is `Conner1209/SzarBlog` (case-sensitive)
-- Check GitHub MCP server is connected
 
 ---
 
 ## Useful Links
 
-- **Repo:** https://github.com/Conner1209/SzarBlog
-- **Issues:** https://github.com/Conner1209/SzarBlog/issues
-- **Live Site:** https://szarblog.pages.dev
-- **API:** https://szarblog-api.conner1209.workers.dev
+- **Repo:** https://github.com/Conner1209/PriceTracker
+- **Issues:** https://github.com/Conner1209/PriceTracker/issues

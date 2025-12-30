@@ -1,13 +1,13 @@
 
 import React from 'react';
-import { Product, Source } from '../types';
-import { 
-  LineChart, 
-  Line, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
+import { Product, Source } from '@/types';
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
   ResponsiveContainer,
   Legend
 } from 'recharts';
@@ -50,7 +50,7 @@ const PreviewView: React.FC<PreviewViewProps> = ({ products, sources }) => {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="time" axisLine={false} tickLine={false} />
                   <YAxis axisLine={false} tickLine={false} domain={['auto', 'auto']} />
-                  <Tooltip 
+                  <Tooltip
                     contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                   />
                   <Legend />
@@ -79,10 +79,10 @@ const PreviewView: React.FC<PreviewViewProps> = ({ products, sources }) => {
                 {products.map((p) => (
                   <tr key={p.id} className="hover:bg-gray-50 cursor-pointer transition-colors group">
                     <td className="px-6 py-4">
-                       <div className="flex flex-col">
-                         <span className="text-[10px] font-bold text-indigo-400">{p.identifierType}</span>
-                         <span className="font-mono text-xs text-gray-600">{p.identifierValue}</span>
-                       </div>
+                      <div className="flex flex-col">
+                        <span className="text-[10px] font-bold text-indigo-400">{p.identifierType}</span>
+                        <span className="font-mono text-xs text-gray-600">{p.identifierValue}</span>
+                      </div>
                     </td>
                     <td className="px-6 py-4 font-bold text-gray-700">{p.name}</td>
                     <td className="px-6 py-4">
@@ -141,8 +141,8 @@ const PreviewView: React.FC<PreviewViewProps> = ({ products, sources }) => {
 
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h3 className="font-bold mb-4 text-gray-800 flex items-center gap-2">
-               <i className="fas fa-satellite-dish text-indigo-500 text-sm"></i>
-               Live Activity
+              <i className="fas fa-satellite-dish text-indigo-500 text-sm"></i>
+              Live Activity
             </h3>
             <div className="space-y-5">
               {products.slice(0, 3).map((p, i) => (

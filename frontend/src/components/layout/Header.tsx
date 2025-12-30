@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Tab } from '../types';
+import { Tab } from '@/types';
 
 interface HeaderProps {
   activeTab: Tab;
@@ -25,17 +25,16 @@ const Header: React.FC<HeaderProps> = ({ activeTab, onTabChange }) => {
               PiTracker Manager
             </span>
           </div>
-          
+
           <nav className="flex space-x-4">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all ${
-                  activeTab === tab.id
+                className={`flex items-center space-x-2 px-4 py-2 rounded-md transition-all ${activeTab === tab.id
                     ? 'bg-indigo-50 text-indigo-700 font-semibold'
                     : 'text-gray-600 hover:bg-gray-100'
-                }`}
+                  }`}
               >
                 <i className={`fas ${tab.icon}`}></i>
                 <span>{tab.label}</span>

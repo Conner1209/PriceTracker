@@ -1,9 +1,9 @@
 
 import React, { useState } from 'react';
-import { Tab, Product, Source } from './types';
-import Header from './components/Header';
-import DesignView from './components/DesignView';
-import PreviewView from './components/PreviewView';
+import { Tab, Product, Source } from '@/types';
+import Header from '@/components/layout/Header';
+import DesignView from '@/components/features/products/DesignView';
+import PreviewView from '@/components/features/products/PreviewView';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Design);
@@ -19,17 +19,17 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
-      
+
       <main className="flex-grow container mx-auto px-4 py-8 max-w-6xl">
         {activeTab === Tab.Design && (
-          <DesignView 
-            products={products} 
-            setProducts={setProducts} 
-            sources={sources} 
+          <DesignView
+            products={products}
+            setProducts={setProducts}
+            sources={sources}
             setSources={setSources}
           />
         )}
-        
+
         {activeTab === Tab.Preview && (
           <PreviewView products={products} sources={sources} />
         )}
