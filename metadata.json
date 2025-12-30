@@ -1,0 +1,5 @@
+{
+  "name": "PiTracker Manager",
+  "description": "A professional tool for managing and visualizing product identifiers for IoT tracking projects on Raspberry Pi.",
+  "requestFramePermissions": []
+}
