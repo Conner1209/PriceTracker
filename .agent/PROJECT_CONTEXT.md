@@ -175,7 +175,7 @@ mcp_github_update_issue({ owner: 'Conner1209', repo: 'PriceTracker', issue_numbe
 - [x] Backend Scaffolding
 - [x] Products CRUD (`/api/products`)
 - [x] Sources CRUD (`/api/sources`)
-- [ ] Connect Frontend to Backend (Issue #3)
+- [x] Connect Frontend to Backend (Issue #3)
 
 ---
 

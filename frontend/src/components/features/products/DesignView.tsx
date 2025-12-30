@@ -4,32 +4,31 @@ import { Product, Source, IdentifierType } from '@/types';
 
 interface DesignViewProps {
   products: Product[];
-  setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
-  sources: Source[];
-  setSources: React.Dispatch<React.SetStateAction<Source[]>>;
+  onAddProduct: (product: any) => Promise<void>;
+  onRemoveProduct: (id: string) => Promise<void>;
 }
 
-const DesignView: React.FC<DesignViewProps> = ({ products, setProducts, sources, setSources }) => {
+const DesignView: React.FC<DesignViewProps> = ({ products, onAddProduct, onRemoveProduct }) => {
   const [newProductName, setNewProductName] = useState('');
   const [newIdentifierValue, setNewIdentifierValue] = useState('');
   const [identifierType, setIdentifierType] = useState<IdentifierType>('EAN');
 
-  const addProduct = () => {
+  const addProduct = async () => {
     if (!newProductName || !newIdentifierValue) return;
-    const newId = Math.random().toString(36).substr(2, 9);
-    setProducts([...products, {
-      id: newId,
+
+    await onAddProduct({
       name: newProductName,
       identifierType: identifierType,
       identifierValue: newIdentifierValue
-    }]);
+    });
+
     setNewProductName('');
     setNewIdentifierValue('');
   };
 
-  const removeProduct = (id: string) => {
-    setProducts(products.filter(p => p.id !== id));
-    setSources(sources.filter(s => s.productId !== id));
+  const removeProduct = async (id: string) => {
+    await onRemoveProduct(id);
+    // setSources(sources.filter(s => s.productId !== id)); // Let parent handle cascade or ignore for now
   };
 
   const identifierOptions: IdentifierType[] = ['EAN', 'UPC', 'ASIN', 'MPN', 'SKU'];

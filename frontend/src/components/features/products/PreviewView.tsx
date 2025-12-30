@@ -87,11 +87,14 @@ const PreviewView: React.FC<PreviewViewProps> = ({ products, sources }) => {
                     <td className="px-6 py-4 font-bold text-gray-700">{p.name}</td>
                     <td className="px-6 py-4">
                       <div className="flex -space-x-2">
-                        {[1, 2].map((i) => (
-                          <div key={i} className="w-8 h-8 rounded-full border-2 border-white bg-indigo-100 flex items-center justify-center text-[10px] text-indigo-600 font-bold" title={`Source ${i}`}>
-                            S{i}
+                        {sources.filter(s => s.productId === p.id).map((s, i) => (
+                          <div key={s.id} className="w-8 h-8 rounded-full border-2 border-white bg-indigo-100 flex items-center justify-center text-[10px] text-indigo-600 font-bold" title={s.storeName}>
+                            S{i + 1}
                           </div>
                         ))}
+                        {sources.filter(s => s.productId === p.id).length === 0 && (
+                          <span className="text-xs text-gray-400">No sources</span>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
