@@ -64,5 +64,15 @@ export const api = {
         scrapeAll: () => fetchJson<{ success: number; failed: number; details: any[] }>('/scraper/run-sync', {
             method: 'POST',
         }),
+    },
+    prices: {
+        // Get price history for a source
+        getHistory: (sourceId: string) => fetchJson<Array<{
+            id: string;
+            sourceId: string;
+            price: number;
+            currency: string;
+            fetchedAt: string;
+        }>>(`/prices/${sourceId}`),
     }
 };
