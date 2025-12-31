@@ -4,8 +4,10 @@ This guide explains how to set up automatic price scraping using cron on Linux.
 
 ## Prerequisites
 
-- PriceTracker backend running (typically as a systemd service)
+- PriceTracker running (via Docker or systemd)
 - Products and sources configured in the web UI
+
+> **For Docker deployments**, see the Docker-specific section below.
 
 ## Quick Setup
 
@@ -140,3 +142,26 @@ The scraper includes a 2-5 second random delay between requests to avoid being b
 - 20+ sources: Every 12 hours
 
 Too frequent scraping may result in IP bans from retailers.
+
+---
+
+## Docker Deployment
+
+If running PriceTracker via Docker Compose, use this cron syntax instead:
+
+```bash
+crontab -e
+```
+
+Add:
+```bash
+# Every 6 hours (Docker)
+0 */6 * * * cd /home/docker/PriceTracker && docker-compose exec -T backend python scrape_prices.py >> /var/log/pricetracker-scrape.log 2>&1
+```
+
+> **Note:** The `-T` flag is required for cron jobs since there's no TTY.
+
+### Test manually:
+```bash
+docker-compose exec -T backend python scrape_prices.py
+```

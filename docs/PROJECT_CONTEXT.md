@@ -1,7 +1,7 @@
 # PriceTracker Project Context
 <!-- AI AGENT SPIN-UP DOCUMENT - Optimized for LLM context consumption -->
 <!-- Last Updated: 2025-12-31 -->
-<!-- Version: 0.3 -->
+<!-- Version: 1.0 (Docker Deployed) -->
 
 ## QUICK REFERENCE
 
@@ -39,14 +39,19 @@ PriceTracker/
 │   │   ├── routes/               # *_route.py (products, sources, scraper, prices, alerts)
 │   │   ├── services/             # *_service.py (scraper, alert)
 │   │   ├── repositories/         # *_repository.py (database, product, source, price, alert)
-│   │   └── schemas/              # *_schema.py (product, source, alert)
-│   ├── db/schema.sql
+│   │   ├── schemas/              # *_schema.py (product, source, alert)
+│   │   └── schema.sql            # Database schema (in src/ for Docker)
+│   ├── db/                       # Original schema location (local dev only)
 │   ├── scrape_prices.py          # Standalone cron script
+│   ├── Dockerfile
 │   └── requirements.txt
+├── data/                         # SQLite database (Docker volume mount)
 ├── docs/
 │   ├── PROJECT_CONTEXT.md        # This file
+│   ├── DOCKER_DEPLOYMENT.md      # Docker setup guide
 │   └── SCHEDULED_SCRAPING.md     # Cron setup guide
-└── docker-compose.yml
+├── docker-compose.yml
+└── deploy.sh                     # One-command deployment script
 ```
 
 ---
@@ -190,10 +195,10 @@ uvicorn src.main:app --reload  # http://localhost:8000
 
 ## SCHEDULED SCRAPING
 
-### Cron Setup (Linux)
+### Cron Setup (Docker)
 ```bash
 # Every 6 hours
-0 */6 * * * cd /path/to/PriceTracker/backend && ./venv/bin/python scrape_prices.py >> /var/log/pricetracker-scrape.log 2>&1
+0 */6 * * * cd /path/to/PriceTracker && docker-compose exec -T backend python scrape_prices.py >> /var/log/pricetracker-scrape.log 2>&1
 ```
 
 See `docs/SCHEDULED_SCRAPING.md` for full setup guide.
@@ -233,7 +238,7 @@ mcp_github_update_issue({ owner: 'Conner1209', repo: 'PriceTracker', issue_numbe
 
 ## CURRENT STATUS
 
-**Phase: Beta Ready**
+**Phase: Production Ready (v1.0)**
 
 ### Completed Issues
 - [x] #3 Connect Frontend to Backend
@@ -241,12 +246,12 @@ mcp_github_update_issue({ owner: 'Conner1209', repo: 'PriceTracker', issue_numbe
 - [x] #5 Fetch Now Trigger
 - [x] #6 Price History Charts (closed as duplicate)
 - [x] #7 Price Drop Alerts
+- [x] #8 Docker Compose Setup **✓ Deployed on RPi**
 - [x] #10 Source Management UI
 - [x] #11 Scheduled Background Scraping
 
 ### Open Issues
-- [ ] #8 Docker Compose Setup
-- [ ] #9 Production Deployment (systemd + nginx)
+- [ ] #9 Production Deployment (systemd + nginx) - N/A with Docker
 
 ---
 

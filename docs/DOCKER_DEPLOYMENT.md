@@ -108,8 +108,10 @@ crontab -e
 
 Add this line (runs every 6 hours):
 ```bash
-0 */6 * * * cd /path/to/PriceTracker && docker-compose exec backend python scrape_prices.py >> /var/log/pricetracker-scrape.log 2>&1
+0 */6 * * * cd /path/to/PriceTracker && docker-compose exec -T backend python scrape_prices.py >> /var/log/pricetracker-scrape.log 2>&1
 ```
+
+> **Note:** The `-T` flag is required for cron jobs since there's no TTY.
 
 ---
 
