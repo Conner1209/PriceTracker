@@ -7,6 +7,7 @@ WORKDIR /app
 # Install system dependencies for web scraping
 RUN apt-get update && apt-get install -y \
     gcc \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first (for layer caching)
