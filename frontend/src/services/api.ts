@@ -34,8 +34,8 @@ async function fetchJson<T>(endpoint: string, options: RequestInit = {}): Promis
 
 export const api = {
     products: {
-        list: () => fetchJson<any[]>('/products'),
-        create: (product: any) => fetchJson<{ id: string }>('/products', {
+        list: () => fetchJson<any[]>('/products/'),
+        create: (product: any) => fetchJson<{ id: string }>('/products/', {
             method: 'POST',
             body: JSON.stringify(product),
         }),
