@@ -15,6 +15,13 @@ async function fetchJson<T>(endpoint: string, options: RequestInit = {}): Promis
         },
     });
 
+    // Handle non-2xx responses
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error:', response.status, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+    }
+
     const json: ApiResponse<T> = await response.json();
 
     if (!json.success) {
@@ -38,9 +45,9 @@ export const api = {
     sources: {
         list: (productId?: string) => {
             const query = productId ? `?productId=${productId}` : '';
-            return fetchJson<any[]>(`/sources${query}`);
+            return fetchJson<any[]>(`/sources/${query}`);
         },
-        create: (source: any) => fetchJson<{ id: string }>('/sources', {
+        create: (source: any) => fetchJson<{ id: string }>('/sources/', {
             method: 'POST',
             body: JSON.stringify(source),
         }),

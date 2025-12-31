@@ -22,5 +22,15 @@ export const useSources = () => {
         fetchSources();
     }, []);
 
-    return { sources, loading, refreshSources: fetchSources };
+    const addSource = async (source: any) => {
+        await api.sources.create(source);
+        await fetchSources();
+    };
+
+    const removeSource = async (id: string) => {
+        await api.sources.delete(id);
+        await fetchSources();
+    };
+
+    return { sources, loading, addSource, removeSource, refreshSources: fetchSources };
 };

@@ -1,40 +1,91 @@
-
 import React, { useState } from 'react';
 import { Product, Source, IdentifierType } from '@/types';
+
+// Common store presets with their CSS selectors
+const STORE_PRESETS = [
+  { name: 'Custom', selector: '' },
+  { name: 'Amazon', selector: '.a-price .a-offscreen' },
+  { name: 'Best Buy', selector: '.priceView-customer-price span' },
+  { name: 'Walmart', selector: '[itemprop="price"]' },
+  { name: 'Target', selector: '[data-test="product-price"]' },
+  { name: 'Newegg', selector: '.price-current' },
+  { name: 'B&H Photo', selector: '[data-selenium="pricingPrice"]' },
+  { name: 'Micro Center', selector: '#pricing' },
+  { name: 'eBay', selector: '.x-price-primary span' },
+];
 
 interface DesignViewProps {
   products: Product[];
   onAddProduct: (product: any) => Promise<void>;
   onRemoveProduct: (id: string) => Promise<void>;
+  sources: Source[];
+  onAddSource: (source: any) => Promise<void>;
+  onRemoveSource: (id: string) => Promise<void>;
 }
 
-const DesignView: React.FC<DesignViewProps> = ({ products, onAddProduct, onRemoveProduct }) => {
+const DesignView: React.FC<DesignViewProps> = ({
+  products,
+  onAddProduct,
+  onRemoveProduct,
+  sources,
+  onAddSource,
+  onRemoveSource
+}) => {
   const [newProductName, setNewProductName] = useState('');
   const [newIdentifierValue, setNewIdentifierValue] = useState('');
   const [identifierType, setIdentifierType] = useState<IdentifierType>('EAN');
 
+  // Source management state
+  const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
+  const [newSource, setNewSource] = useState({ storeName: '', url: '', cssSelector: '' });
+
+  const handlePresetChange = (presetName: string) => {
+    const preset = STORE_PRESETS.find(p => p.name === presetName);
+    if (preset) {
+      if (preset.name === 'Custom') {
+        setNewSource(prev => ({ ...prev, storeName: '', cssSelector: '' }));
+      } else {
+        setNewSource(prev => ({ ...prev, storeName: preset.name, cssSelector: preset.selector }));
+      }
+    }
+  };
+
   const addProduct = async () => {
     if (!newProductName || !newIdentifierValue) return;
-
     await onAddProduct({
       name: newProductName,
-      identifierType: identifierType,
+      identifierType,
       identifierValue: newIdentifierValue
     });
-
     setNewProductName('');
     setNewIdentifierValue('');
   };
 
-  const removeProduct = async (id: string) => {
-    await onRemoveProduct(id);
-    // setSources(sources.filter(s => s.productId !== id)); // Let parent handle cascade or ignore for now
+  const handleAddSource = async (productId: string) => {
+    if (!newSource.storeName || !newSource.url || !newSource.cssSelector) return;
+
+    try {
+      await onAddSource({
+        storeName: newSource.storeName,
+        url: newSource.url,
+        cssSelector: newSource.cssSelector,
+        productId,
+        isActive: true
+      });
+      setNewSource({ storeName: '', url: '', cssSelector: '' });
+    } catch (error) {
+      console.error('Failed to add source:', error);
+    }
   };
+
+  const getSourcesForProduct = (productId: string) =>
+    sources.filter(s => s.productId === productId);
 
   const identifierOptions: IdentifierType[] = ['EAN', 'UPC', 'ASIN', 'MPN', 'SKU'];
 
   return (
     <div className="space-y-8 animate-fadeIn">
+      {/* Add Product Form */}
       <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
         <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
           <i className="fas fa-plus-circle text-indigo-500"></i>
@@ -77,10 +128,11 @@ const DesignView: React.FC<DesignViewProps> = ({ products, onAddProduct, onRemov
         </div>
         <p className="mt-2 text-xs text-gray-400">
           <i className="fas fa-info-circle mr-1"></i>
-          Tip: Use <b>EAN</b> or <b>UPC</b> for better cross-store reliability. <b>ASIN</b> is best for Amazon.
+          Tip: Use <b>EAN</b> or <b>UPC</b> for cross-store reliability. <b>ASIN</b> is best for Amazon.
         </p>
       </div>
 
+      {/* Product List */}
       <div className="space-y-4">
         <h3 className="font-bold text-gray-700 flex items-center gap-2">
           <i className="fas fa-list-ul"></i>
@@ -91,26 +143,150 @@ const DesignView: React.FC<DesignViewProps> = ({ products, onAddProduct, onRemov
             <p className="text-gray-400">No products added yet.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {products.map((p) => (
-              <div key={p.id} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex justify-between items-center group hover:border-indigo-200 transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="bg-indigo-50 text-indigo-600 px-2 py-1 rounded text-[10px] font-black w-10 text-center">
-                    {p.identifierType}
+          <div className="space-y-3">
+            {products.map((p) => {
+              const productSources = getSourcesForProduct(p.id);
+              const isExpanded = expandedProductId === p.id;
+
+              return (
+                <div key={p.id} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                  {/* Product Header */}
+                  <div className="p-4 flex justify-between items-center hover:bg-gray-50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="bg-indigo-50 text-indigo-600 px-2 py-1 rounded text-[10px] font-black w-10 text-center">
+                        {p.identifierType}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-gray-800">{p.name}</h4>
+                        <p className="text-sm text-gray-500 font-mono">{p.identifierValue}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => setExpandedProductId(isExpanded ? null : p.id)}
+                        className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${isExpanded
+                          ? 'bg-indigo-100 text-indigo-700'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          }`}
+                      >
+                        <i className="fas fa-link text-xs"></i>
+                        Sources ({productSources.length})
+                        <i className={`fas fa-chevron-down text-xs transition-transform ${isExpanded ? 'rotate-180' : ''}`}></i>
+                      </button>
+                      <button
+                        onClick={() => onRemoveProduct(p.id)}
+                        className="text-gray-300 hover:text-red-500 transition-colors p-2"
+                      >
+                        <i className="fas fa-trash"></i>
+                      </button>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-bold text-gray-800">{p.name}</h4>
-                    <p className="text-sm text-gray-500 font-mono">{p.identifierValue}</p>
-                  </div>
+
+                  {/* Sources Panel (Expandable) */}
+                  {isExpanded && (
+                    <div className="bg-gray-50 p-4 border-t border-gray-100">
+                      {/* Existing Sources */}
+                      {productSources.length > 0 ? (
+                        <div className="space-y-2 mb-4">
+                          {productSources.map(s => (
+                            <div key={s.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
+                              <div className="flex-grow min-w-0">
+                                <div className="flex items-center gap-2">
+                                  <span className="font-bold text-gray-700 text-sm">{s.storeName}</span>
+                                  <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-mono">
+                                    {s.cssSelector || 'N/A'}
+                                  </span>
+                                </div>
+                                <a
+                                  href={s.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-xs text-blue-500 hover:underline truncate block"
+                                >
+                                  {s.url}
+                                </a>
+                              </div>
+                              <button
+                                onClick={() => onRemoveSource(s.id)}
+                                className="text-gray-400 hover:text-red-500 p-1 ml-2"
+                              >
+                                <i className="fas fa-times-circle"></i>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-gray-500 italic text-center py-2 mb-4">
+                          No sources configured for this product.
+                        </p>
+                      )}
+
+                      {/* Add Source Form */}
+                      <div className="bg-white p-4 rounded-lg border-2 border-dashed border-indigo-100">
+                        <h5 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-3">
+                          Add New Source
+                        </h5>
+                        <div className="flex flex-col gap-3">
+                          {/* Store Preset Dropdown */}
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div>
+                              <label className="text-xs text-gray-500 mb-1 block">Store Preset</label>
+                              <select
+                                className="w-full border p-2 rounded text-sm focus:border-indigo-500 outline-none bg-gray-50"
+                                onChange={(e) => handlePresetChange(e.target.value)}
+                                defaultValue="Custom"
+                              >
+                                {STORE_PRESETS.map(preset => (
+                                  <option key={preset.name} value={preset.name}>{preset.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div>
+                              <label className="text-xs text-gray-500 mb-1 block">Store Name</label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Best Buy"
+                                className="w-full border p-2 rounded text-sm focus:border-indigo-500 outline-none"
+                                value={newSource.storeName}
+                                onChange={e => setNewSource({ ...newSource, storeName: e.target.value })}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <label className="text-xs text-gray-500 mb-1 block">CSS Selector</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. .price-xl"
+                              className="w-full border p-2 rounded text-sm focus:border-indigo-500 outline-none font-mono"
+                              value={newSource.cssSelector}
+                              onChange={e => setNewSource({ ...newSource, cssSelector: e.target.value })}
+                            />
+                          </div>
+                          <div className="flex gap-3">
+                            <div className="flex-grow">
+                              <label className="text-xs text-gray-500 mb-1 block">Product URL</label>
+                              <input
+                                type="text"
+                                placeholder="https://..."
+                                className="w-full border p-2 rounded text-sm focus:border-indigo-500 outline-none"
+                                value={newSource.url}
+                                onChange={e => setNewSource({ ...newSource, url: e.target.value })}
+                              />
+                            </div>
+                            <button
+                              onClick={() => handleAddSource(p.id)}
+                              className="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-indigo-700 whitespace-nowrap self-end"
+                            >
+                              Add Source
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <button
-                  onClick={() => removeProduct(p.id)}
-                  className="text-gray-300 hover:text-red-500 transition-colors p-2"
-                >
-                  <i className="fas fa-trash"></i>
-                </button>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

@@ -9,11 +9,11 @@ import { useSources } from '@/hooks/useSources';
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Design);
   const { products, addProduct, removeProduct, loading: productsLoading } = useProducts();
-  const { sources, loading: sourcesLoading } = useSources();
+  const { sources, addSource, removeSource, loading: sourcesLoading } = useSources();
 
   const isLoading = productsLoading || sourcesLoading;
 
-  if (isLoading && products.length === 0) { // Only show full loader if no data
+  if (isLoading && products.length === 0) {
     return (
       <div className="min-h-screen flex items-center justify-center text-gray-500 font-medium">
         <svg className="animate-spin h-5 w-5 mr-3 text-indigo-500" viewBox="0 0 24 24">
@@ -35,6 +35,9 @@ const App: React.FC = () => {
             products={products}
             onAddProduct={addProduct}
             onRemoveProduct={removeProduct}
+            sources={sources}
+            onAddSource={addSource}
+            onRemoveSource={removeSource}
           />
         )}
 

@@ -7,18 +7,17 @@ router = APIRouter(prefix="/api/sources", tags=["sources"])
 
 @router.get("/", response_model=dict)
 async def list_sources(productId: Optional[str] = None):
-    # Support camelCase query param too for consistency? 
-    # FastAPI usually expects snake_case_param unless aliased.
-    # Let's check both or just standard snake_case product_id if we want pythonic.
-    # But frontend might send `?productId=...`
-    # Let's stick to consistent camelCase if possible or snake_case for query params.
-    # Standard is kebab-case or snake_case in URLs.
-    # I'll use `product_id` (snake) as python standard, frontend can adapt.
     if productId:
         sources = await source_service.get_sources_by_product(productId)
     else:
         sources = await source_service.get_all_sources()
-    return {"success": True, "data": sources}
+    
+    # Convert to SourceResponse and serialize with camelCase aliases
+    response_data = [
+        SourceResponse(**source).model_dump(by_alias=True) 
+        for source in sources
+    ]
+    return {"success": True, "data": response_data}
 
 @router.post("/", response_model=dict)
 async def create_source(source: SourceCreate):
