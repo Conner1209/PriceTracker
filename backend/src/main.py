@@ -7,16 +7,16 @@ from src.repositories.database_repository import db_repo
 import os
 
 app = FastAPI(
-
     title="PriceTracker API",
     description="Self-hosted price monitoring with global identifier tracking",
     version="0.1.0",
+    redirect_slashes=False,  # Prevent 307 redirects that break Docker proxy
 )
 
-# CORS for local development
+# CORS - allow all origins for Docker/self-hosted deployment
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
