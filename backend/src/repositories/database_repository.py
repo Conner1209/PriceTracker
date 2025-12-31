@@ -2,7 +2,8 @@ import aiosqlite
 import os
 from typing import List, Any, Optional, Dict
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "db", "pricetracker.db")
+# Default to local path, but allow override for Docker
+DB_PATH = os.environ.get("DATABASE_PATH", os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "db", "pricetracker.db"))
 
 class DatabaseRepository:
     def __init__(self, db_path: str = DB_PATH):
