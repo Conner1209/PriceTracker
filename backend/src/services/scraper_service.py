@@ -3,6 +3,7 @@ import re
 from bs4 import BeautifulSoup
 from src.repositories.source_repository import source_repo
 from src.repositories.price_repository import price_repo
+from src.services.alert_service import alert_service
 from typing import Dict, Any
 
 class ScraperService:
@@ -56,6 +57,16 @@ class ScraperService:
             price = self._clean_price(price_text)
             
             await price_repo.add_price_record(source_id, price, success=True)
+            
+            # Check if this price triggers any alerts
+            await alert_service.check_price_against_alerts(
+                source_id=source_id,
+                current_price=price,
+                product_name=source.get('product_name', 'Product'),
+                store_name=source.get('store_name', 'Store'),
+                product_url=source.get('url')
+            )
+            
             return price
             
         except Exception as e:

@@ -74,5 +74,52 @@ export const api = {
             currency: string;
             fetchedAt: string;
         }>>(`/prices/${sourceId}`),
+    },
+    alerts: {
+        // List alerts (optionally filtered)
+        list: (sourceId?: string) => {
+            const query = sourceId ? `?sourceId=${sourceId}` : '';
+            return fetchJson<Array<{
+                id: string;
+                productId: string;
+                sourceId: string;
+                targetPrice: number;
+                webhookUrl: string | null;
+                isActive: boolean;
+                isTriggered: boolean;
+                createdAt: string;
+                triggeredAt: string | null;
+            }>>(`/alerts/${query}`);
+        },
+        // Create new alert
+        create: (alert: {
+            productId: string;
+            sourceId: string;
+            targetPrice: number;
+            webhookUrl?: string;
+        }) => fetchJson<{ id: string }>('/alerts/', {
+            method: 'POST',
+            body: JSON.stringify(alert),
+        }),
+        // Update alert
+        update: (id: string, update: {
+            targetPrice?: number;
+            webhookUrl?: string;
+            isActive?: boolean;
+        }) => fetchJson<void>(`/alerts/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(update),
+        }),
+        // Delete alert
+        delete: (id: string) => fetchJson<void>(`/alerts/${id}`, {
+            method: 'DELETE',
+        }),
+        // Get default webhook
+        getDefaultWebhook: () => fetchJson<{ webhookUrl: string | null }>('/alerts/settings/webhook'),
+        // Set default webhook
+        setDefaultWebhook: (url: string) => fetchJson<void>('/alerts/settings/webhook', {
+            method: 'PUT',
+            body: JSON.stringify({ webhookUrl: url }),
+        }),
     }
 };

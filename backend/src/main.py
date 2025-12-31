@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from src.routes import products_route, sources_route, scraper_route, prices_route
+from src.routes import products_route, sources_route, scraper_route, prices_route, alerts_route
 from src.repositories.database_repository import db_repo
 import os
 
@@ -47,5 +47,6 @@ app.include_router(products_route.router)
 app.include_router(sources_route.router)
 app.include_router(scraper_route.router)
 app.include_router(prices_route.router)
+app.include_router(alerts_route.router)
 
 

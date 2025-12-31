@@ -39,3 +39,25 @@ CREATE TABLE IF NOT EXISTS price_history (
 CREATE INDEX IF NOT EXISTS idx_price_history_source ON price_history(source_id);
 CREATE INDEX IF NOT EXISTS idx_price_history_timestamp ON price_history(timestamp);
 CREATE INDEX IF NOT EXISTS idx_sources_product ON sources(product_id);
+
+-- Alerts table (price drop notifications)
+CREATE TABLE IF NOT EXISTS alerts (
+    id TEXT PRIMARY KEY,
+    product_id TEXT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    source_id TEXT NOT NULL REFERENCES sources(id) ON DELETE CASCADE,
+    target_price REAL NOT NULL,
+    is_active INTEGER DEFAULT 1,
+    is_triggered INTEGER DEFAULT 0,
+    webhook_url TEXT,  -- Optional: custom webhook override (uses default if null)
+    created_at TEXT DEFAULT (datetime('now')),
+    triggered_at TEXT  -- When the alert was last triggered
+);
+
+CREATE INDEX IF NOT EXISTS idx_alerts_source ON alerts(source_id);
+CREATE INDEX IF NOT EXISTS idx_alerts_active ON alerts(is_active);
+
+-- Settings table (for global config like default webhook URL)
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+);
