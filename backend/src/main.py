@@ -25,8 +25,8 @@ app.add_middleware(
 
 @app.on_event("startup")
 async def startup_event():
-    # Initialize Database
-    schema_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "db", "schema.sql")
+    # Initialize Database - schema is in src/ to avoid being overwritten by volume mount
+    schema_path = os.path.join(os.path.dirname(__file__), "schema.sql")
     if os.path.exists(schema_path):
         await db_repo.init_db(schema_path)
 
