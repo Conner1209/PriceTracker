@@ -149,8 +149,8 @@ const PriceChart: React.FC<PriceChartProps> = ({ sourceId, storeName, accentColo
                             key={range}
                             onClick={() => setTimeRange(range)}
                             className={`px-2 py-1 text-xs font-medium rounded transition-all ${timeRange === range
-                                    ? 'bg-white text-gray-800 shadow-sm'
-                                    : 'text-gray-500 hover:text-gray-700'
+                                ? 'bg-white text-gray-800 shadow-sm'
+                                : 'text-gray-500 hover:text-gray-700'
                                 }`}
                         >
                             {range === 'all' ? 'All' : range.toUpperCase()}
@@ -214,7 +214,10 @@ const PriceChart: React.FC<PriceChartProps> = ({ sourceId, storeName, accentColo
                                 boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
                                 padding: '12px'
                             }}
-                            formatter={(value: number) => [`$${value.toFixed(2)}`, 'Price']}
+                            formatter={(value) => {
+                                const numValue = typeof value === 'number' ? value : 0;
+                                return [`$${numValue.toFixed(2)}`, 'Price'];
+                            }}
                             labelFormatter={(label, payload) => {
                                 if (payload && payload[0]) {
                                     return `${label} at ${payload[0].payload.time}`;
