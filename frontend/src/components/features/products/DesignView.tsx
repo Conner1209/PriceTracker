@@ -21,6 +21,7 @@ interface DesignViewProps {
   sources: Source[];
   onAddSource: (source: any) => Promise<void>;
   onRemoveSource: (id: string) => Promise<void>;
+  onScrapeSource: (sourceId: string) => Promise<{ price: number }>;
 }
 
 const DesignView: React.FC<DesignViewProps> = ({
@@ -29,7 +30,8 @@ const DesignView: React.FC<DesignViewProps> = ({
   onRemoveProduct,
   sources,
   onAddSource,
-  onRemoveSource
+  onRemoveSource,
+  onScrapeSource
 }) => {
   const [newProductName, setNewProductName] = useState('');
   const [newIdentifierValue, setNewIdentifierValue] = useState('');
@@ -38,6 +40,39 @@ const DesignView: React.FC<DesignViewProps> = ({
   // Source management state
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
   const [newSource, setNewSource] = useState({ storeName: '', url: '', cssSelector: '' });
+
+  // Scraping state: { sourceId: { loading: boolean, result: string | null, error: string | null } }
+  const [scrapingStatus, setScrapingStatus] = useState<Record<string, { loading: boolean; result?: string; error?: string }>>({});
+
+  const handleScrapeSource = async (sourceId: string) => {
+    setScrapingStatus(prev => ({ ...prev, [sourceId]: { loading: true } }));
+    try {
+      const result = await onScrapeSource(sourceId);
+      setScrapingStatus(prev => ({
+        ...prev,
+        [sourceId]: { loading: false, result: `$${result.price.toFixed(2)}` }
+      }));
+      // Clear result after 5 seconds
+      setTimeout(() => {
+        setScrapingStatus(prev => {
+          const { [sourceId]: _, ...rest } = prev;
+          return rest;
+        });
+      }, 5000);
+    } catch (error: any) {
+      setScrapingStatus(prev => ({
+        ...prev,
+        [sourceId]: { loading: false, error: error.message || 'Scrape failed' }
+      }));
+      // Clear error after 5 seconds
+      setTimeout(() => {
+        setScrapingStatus(prev => {
+          const { [sourceId]: _, ...rest } = prev;
+          return rest;
+        });
+      }, 5000);
+    }
+  };
 
   const handlePresetChange = (presetName: string) => {
     const preset = STORE_PRESETS.find(p => p.name === presetName);
@@ -188,32 +223,65 @@ const DesignView: React.FC<DesignViewProps> = ({
                       {/* Existing Sources */}
                       {productSources.length > 0 ? (
                         <div className="space-y-2 mb-4">
-                          {productSources.map(s => (
-                            <div key={s.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
-                              <div className="flex-grow min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-bold text-gray-700 text-sm">{s.storeName}</span>
-                                  <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-mono">
-                                    {s.cssSelector || 'N/A'}
-                                  </span>
+                          {productSources.map(s => {
+                            const status = scrapingStatus[s.id];
+                            return (
+                              <div key={s.id} className="flex items-center justify-between bg-white p-3 rounded-lg border border-gray-200">
+                                <div className="flex-grow min-w-0">
+                                  <div className="flex items-center gap-2">
+                                    <span className="font-bold text-gray-700 text-sm">{s.storeName}</span>
+                                    <span className="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-mono">
+                                      {s.cssSelector || 'N/A'}
+                                    </span>
+                                    {/* Scrape result/error display */}
+                                    {status?.result && (
+                                      <span className="text-xs bg-green-100 text-green-700 px-2 py-0.5 rounded font-bold animate-pulse">
+                                        {status.result}
+                                      </span>
+                                    )}
+                                    {status?.error && (
+                                      <span className="text-xs bg-red-100 text-red-600 px-2 py-0.5 rounded">
+                                        {status.error}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <a
+                                    href={s.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-xs text-blue-500 hover:underline truncate block"
+                                  >
+                                    {s.url}
+                                  </a>
                                 </div>
-                                <a
-                                  href={s.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-xs text-blue-500 hover:underline truncate block"
-                                >
-                                  {s.url}
-                                </a>
+                                <div className="flex items-center gap-1 ml-2">
+                                  {/* Fetch Now Button */}
+                                  <button
+                                    onClick={() => handleScrapeSource(s.id)}
+                                    disabled={status?.loading}
+                                    className={`px-2 py-1 rounded text-xs font-medium transition-all ${status?.loading
+                                        ? 'bg-gray-200 text-gray-400 cursor-wait'
+                                        : 'bg-indigo-100 text-indigo-700 hover:bg-indigo-200'
+                                      }`}
+                                    title="Fetch current price"
+                                  >
+                                    {status?.loading ? (
+                                      <i className="fas fa-spinner fa-spin"></i>
+                                    ) : (
+                                      <i className="fas fa-sync-alt"></i>
+                                    )}
+                                  </button>
+                                  {/* Delete Button */}
+                                  <button
+                                    onClick={() => onRemoveSource(s.id)}
+                                    className="text-gray-400 hover:text-red-500 p-1"
+                                  >
+                                    <i className="fas fa-times-circle"></i>
+                                  </button>
+                                </div>
                               </div>
-                              <button
-                                onClick={() => onRemoveSource(s.id)}
-                                className="text-gray-400 hover:text-red-500 p-1 ml-2"
-                              >
-                                <i className="fas fa-times-circle"></i>
-                              </button>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       ) : (
                         <p className="text-sm text-gray-500 italic text-center py-2 mb-4">

@@ -54,5 +54,15 @@ export const api = {
         delete: (id: string) => fetchJson<void>(`/sources/${id}`, {
             method: 'DELETE',
         }),
+    },
+    scraper: {
+        // Scrape a specific source
+        scrapeSource: (sourceId: string) => fetchJson<{ price: number }>(`/scraper/test/${sourceId}`, {
+            method: 'POST',
+        }),
+        // Scrape all active sources
+        scrapeAll: () => fetchJson<{ success: number; failed: number; details: any[] }>('/scraper/run-sync', {
+            method: 'POST',
+        }),
     }
 };

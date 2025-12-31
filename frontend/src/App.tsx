@@ -5,6 +5,7 @@ import DesignView from '@/components/features/products/DesignView';
 import PreviewView from '@/components/features/products/PreviewView';
 import { useProducts } from '@/hooks/useProducts';
 import { useSources } from '@/hooks/useSources';
+import { api } from '@/services/api';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>(Tab.Design);
@@ -38,6 +39,7 @@ const App: React.FC = () => {
             sources={sources}
             onAddSource={addSource}
             onRemoveSource={removeSource}
+            onScrapeSource={api.scraper.scrapeSource}
           />
         )}
 

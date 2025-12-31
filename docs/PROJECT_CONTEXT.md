@@ -177,6 +177,7 @@ mcp_github_update_issue({ owner: 'Conner1209', repo: 'PriceTracker', issue_numbe
 - [x] Sources CRUD (`/api/sources`)
 - [x] Connect Frontend to Backend (Issue #3)
 - [x] Scraper Engine Implementation (Issue #4)
+- [x] Source Management UI with Store Presets (Issue #5)
 
 ---
 
