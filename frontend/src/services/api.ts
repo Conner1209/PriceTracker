@@ -1,4 +1,5 @@
-const API_BASE_URL = 'http://localhost:8000/api';
+// In development, use explicit localhost. In production (Docker), nginx proxies /api/ to backend
+const API_BASE_URL = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:8000/api' : '/api');
 
 export interface ApiResponse<T> {
     success: boolean;

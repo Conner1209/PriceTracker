@@ -1,7 +1,7 @@
 # PriceTracker Project Context
 <!-- AI AGENT SPIN-UP DOCUMENT - Optimized for LLM context consumption -->
-<!-- Last Updated: 2025-12-30 -->
-<!-- Version: 0.1 -->
+<!-- Last Updated: 2025-12-31 -->
+<!-- Version: 0.3 -->
 
 ## QUICK REFERENCE
 
@@ -26,23 +26,26 @@ PriceTracker/
 │   │   │   ├── ui/               # Primitives (Toast, Icons)
 │   │   │   ├── layout/           # Header, Footer
 │   │   │   └── features/
-│   │   │       ├── products/     # Product management
-│   │   │       ├── sources/      # Source management
-│   │   │       └── dashboard/    # Price charts
+│   │   │       ├── products/     # DesignView, PreviewView
+│   │   │       ├── alerts/       # AlertModal, AlertBadge
+│   │   │       └── charts/       # PriceChart
 │   │   ├── context/
-│   │   ├── hooks/
-│   │   ├── services/api.ts
+│   │   ├── hooks/                # useProducts, useData
+│   │   ├── services/api.ts       # API client
 │   │   └── types/
 │   └── vite.config.ts
 ├── backend/
 │   ├── src/
-│   │   ├── routes/*_route.py
-│   │   ├── services/*_service.py
-│   │   ├── repositories/*_repository.py
-│   │   └── schemas/*_schema.py
+│   │   ├── routes/               # *_route.py (products, sources, scraper, prices, alerts)
+│   │   ├── services/             # *_service.py (scraper, alert)
+│   │   ├── repositories/         # *_repository.py (database, product, source, price, alert)
+│   │   └── schemas/              # *_schema.py (product, source, alert)
 │   ├── db/schema.sql
+│   ├── scrape_prices.py          # Standalone cron script
 │   └── requirements.txt
 ├── docs/
+│   ├── PROJECT_CONTEXT.md        # This file
+│   └── SCHEDULED_SCRAPING.md     # Cron setup guide
 └── docker-compose.yml
 ```
 
@@ -101,6 +104,20 @@ interface Source {
 }
 ```
 
+### Alert
+```typescript
+interface Alert {
+  id: string;
+  productId: string;
+  sourceId: string;
+  targetPrice: number;
+  webhookUrl?: string;
+  isActive: boolean;
+  isTriggered: boolean;
+  triggeredAt?: string;
+}
+```
+
 ### PriceRecord
 ```typescript
 interface PriceRecord {
@@ -112,24 +129,38 @@ interface PriceRecord {
 
 ---
 
-## API PATTERNS
+## API ENDPOINTS
 
-### Response Format
-```python
-{"success": True, "data": {...}}
-{"success": False, "error": "message"}
-```
-
-### Key Endpoints (Planned)
+### Products & Sources
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
 | `/api/products` | GET | List products |
 | `/api/products` | POST | Create product |
-| `/api/products/:id` | PUT | Update product |
 | `/api/products/:id` | DELETE | Delete product |
-| `/api/sources` | GET/POST | Manage sources |
-| `/api/scraper/run` | POST | Manual scrape trigger |
-| `/api/prices/:productId` | GET | Price history |
+| `/api/sources` | GET | List sources (optional `?productId=`) |
+| `/api/sources` | POST | Create source |
+| `/api/sources/:id` | DELETE | Delete source |
+
+### Scraper
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/scraper/run` | POST | Trigger background scrape (all) |
+| `/api/scraper/run-sync` | POST | Sync scrape (blocks, returns results) |
+| `/api/scraper/test/:sourceId` | POST | Scrape single source |
+
+### Prices
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/prices/:sourceId` | GET | Price history for source |
+
+### Alerts
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/alerts` | GET | List alerts (`?sourceId=` or `?productId=`) |
+| `/api/alerts` | POST | Create alert |
+| `/api/alerts/:id` | PUT | Update alert |
+| `/api/alerts/:id` | DELETE | Delete alert |
+| `/api/alerts/settings/webhook` | GET/PUT | Default webhook URL |
 
 ---
 
@@ -139,7 +170,7 @@ interface PriceRecord {
 ```bash
 cd frontend
 npm install
-npm run dev          # http://localhost:5173
+npm run dev          # http://localhost:3000
 ```
 
 ### Backend
@@ -157,11 +188,42 @@ uvicorn src.main:app --reload  # http://localhost:8000
 
 ---
 
+## SCHEDULED SCRAPING
+
+### Cron Setup (Linux)
+```bash
+# Every 6 hours
+0 */6 * * * cd /path/to/PriceTracker/backend && ./venv/bin/python scrape_prices.py >> /var/log/pricetracker-scrape.log 2>&1
+```
+
+See `docs/SCHEDULED_SCRAPING.md` for full setup guide.
+
+---
+
+## ALERT NOTIFICATIONS
+
+Uses webhook-based notifications, designed for **Ntfy.sh**:
+- Push notifications to iOS/Android
+- No account required - just subscribe to a topic
+- Default webhook stored in `settings` table
+
+### Payload Format
+```json
+{
+  "title": "🎉 Price Drop Alert!",
+  "message": "Product dropped to $X at Store (target: $Y)",
+  "priority": 4,
+  "click": "https://store.com/product-url"
+}
+```
+
+---
+
 ## GITHUB WORKFLOW
 
 ```typescript
 // List issues
-mcp_github_list_issues({ owner: 'Conner1209', repo: 'PriceTracker', state: 'open', per_page: 30 })
+mcp_github_list_issues({ owner: 'Conner1209', repo: 'PriceTracker', state: 'open' })
 
 // Close issue
 mcp_github_update_issue({ owner: 'Conner1209', repo: 'PriceTracker', issue_number: X, state: 'closed' })
@@ -171,13 +233,38 @@ mcp_github_update_issue({ owner: 'Conner1209', repo: 'PriceTracker', issue_numbe
 
 ## CURRENT STATUS
 
-**Phase: Implementation**
-- [x] Backend Scaffolding
-- [x] Products CRUD (`/api/products`)
-- [x] Sources CRUD (`/api/sources`)
-- [x] Connect Frontend to Backend (Issue #3)
-- [x] Scraper Engine Implementation (Issue #4)
-- [x] Source Management UI with Store Presets (Issue #5)
+**Phase: Beta Ready**
+
+### Completed Issues
+- [x] #3 Connect Frontend to Backend
+- [x] #4 Scraper Engine Implementation
+- [x] #5 Fetch Now Trigger
+- [x] #6 Price History Charts (closed as duplicate)
+- [x] #7 Price Drop Alerts
+- [x] #10 Source Management UI
+- [x] #11 Scheduled Background Scraping
+
+### Open Issues
+- [ ] #8 Docker Compose Setup
+- [ ] #9 Production Deployment (systemd + nginx)
+
+---
+
+## KEY DEPENDENCIES
+
+### Backend
+- **FastAPI** - Web framework
+- **httpx** - Async HTTP client for scraping
+- **BeautifulSoup4** - HTML parsing
+- **aiohttp** - Async HTTP for webhooks
+- **aiosqlite** - Async SQLite
+
+### Frontend
+- **React 18** + **TypeScript**
+- **Vite** - Build tool
+- **Tailwind CSS** - Styling
+- **Recharts** - Price charts
+- **Font Awesome** - Icons
 
 ---
 
