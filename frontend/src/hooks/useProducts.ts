@@ -25,8 +25,9 @@ export const useProducts = () => {
     }, []);
 
     const addProduct = async (product: any) => {
-        await api.products.create(product);
+        const result = await api.products.create(product);
         await fetchProducts();
+        return result; // Return { id: string } so caller can use it
     };
 
     const removeProduct = async (id: string) => {

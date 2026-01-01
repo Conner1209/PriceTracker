@@ -79,6 +79,40 @@ mcp_github_update_issue({
 
 ---
 
+## Git Commit & Push (Windows)
+
+**Note:** This project deploys via GitHub → Raspberry Pi. Changes must be pushed to trigger deployment.
+
+### 1. Stage Changes
+```powershell
+git add -A
+```
+
+### 2. Commit with Conventional Message
+```powershell
+git commit -m "feat: Short description
+
+• Bullet point detail 1
+• Bullet point detail 2
+• Bullet point detail 3"
+```
+
+### 3. Push to GitHub
+```powershell
+git push origin main
+```
+
+### 4. Deploy on Raspberry Pi
+SSH into Pi and run:
+```bash
+cd /path/to/PriceTracker
+./deploy.sh
+```
+
+This pulls latest from GitHub and rebuilds Docker containers.
+
+---
+
 ## GitHub MCP Patterns
 
 ### Listing Issues

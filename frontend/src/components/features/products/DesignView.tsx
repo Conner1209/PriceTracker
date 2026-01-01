@@ -19,7 +19,7 @@ const STORE_PRESETS = [
 
 interface DesignViewProps {
   products: Product[];
-  onAddProduct: (product: any) => Promise<void>;
+  onAddProduct: (product: any) => Promise<{ id: string }>;
   onRemoveProduct: (id: string) => Promise<void>;
   sources: Source[];
   onAddSource: (source: any) => Promise<void>;
@@ -162,7 +162,7 @@ const DesignView: React.FC<DesignViewProps> = ({
     }
 
     try {
-      // Step 1: Create the product
+      // Step 1: Create the product and get its ID
       const productResult = await onAddProduct({
         name: newProductName.trim(),
         identifierType,
@@ -170,19 +170,20 @@ const DesignView: React.FC<DesignViewProps> = ({
       });
 
       // Step 2: Create the source linked to the new product
-      // Note: onAddProduct should return the new product, we need to find it
-      // Since we just created it, it should be the most recent one with matching name
-      const newProduct = products.find(p => p.name === newProductName.trim()) ||
-        { id: (productResult as any)?.id };
+      // productResult should be { id: string } from api.products.create
+      const newProductId = productResult?.id;
 
-      if (newProduct?.id) {
+      if (newProductId) {
         await onAddSource({
           storeName: newStoreName.trim(),
           url: productUrl.trim(),
           cssSelector: newCssSelector.trim(),
-          productId: newProduct.id,
+          productId: newProductId,
           isActive: true
         });
+      } else {
+        console.error('Failed to get product ID from creation result:', productResult);
+        setParseError('Product created but source could not be linked. Please add source manually.');
       }
 
       // Reset form
@@ -322,8 +323,8 @@ const DesignView: React.FC<DesignViewProps> = ({
               onClick={handleParseUrl}
               disabled={isParsingUrl || !productUrl.trim()}
               className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isParsingUrl
-                  ? 'bg-gray-200 text-gray-400 cursor-wait'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                ? 'bg-gray-200 text-gray-400 cursor-wait'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
             >
               {isParsingUrl ? (
@@ -418,8 +419,8 @@ const DesignView: React.FC<DesignViewProps> = ({
               onClick={handleAddProductWithSource}
               disabled={!newProductName.trim() || !productUrl.trim() || !newStoreName.trim() || !newCssSelector.trim()}
               className={`px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2 ${!newProductName.trim() || !productUrl.trim() || !newStoreName.trim() || !newCssSelector.trim()
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                : 'bg-indigo-600 text-white hover:bg-indigo-700'
                 }`}
             >
               <i className="fas fa-plus"></i>
