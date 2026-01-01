@@ -36,9 +36,16 @@ const DesignView: React.FC<DesignViewProps> = ({
   onRemoveSource,
   onScrapeSource
 }) => {
+  // New unified form state
+  const [productUrl, setProductUrl] = useState('');
   const [newProductName, setNewProductName] = useState('');
   const [newIdentifierValue, setNewIdentifierValue] = useState('');
   const [identifierType, setIdentifierType] = useState<IdentifierType>('EAN');
+  const [newStoreName, setNewStoreName] = useState('');
+  const [newCssSelector, setNewCssSelector] = useState('');
+  const [isParsingUrl, setIsParsingUrl] = useState(false);
+  const [parseError, setParseError] = useState<string | null>(null);
+  const [urlDetected, setUrlDetected] = useState(false);
 
   // Source management state
   const [expandedProductId, setExpandedProductId] = useState<string | null>(null);
@@ -109,6 +116,90 @@ const DesignView: React.FC<DesignViewProps> = ({
     }
   };
 
+  // Handle URL paste/blur - parse and auto-fill fields
+  const handleParseUrl = async () => {
+    if (!productUrl.trim()) return;
+
+    setIsParsingUrl(true);
+    setParseError(null);
+
+    try {
+      const result = await api.url.parse(productUrl.trim());
+
+      // Auto-fill detected fields
+      if (result.storeName) setNewStoreName(result.storeName);
+      if (result.cssSelector) setNewCssSelector(result.cssSelector);
+      if (result.identifierType) setIdentifierType(result.identifierType as IdentifierType);
+      if (result.identifierValue) setNewIdentifierValue(result.identifierValue);
+      if (result.suggestedName) setNewProductName(result.suggestedName);
+
+      setUrlDetected(result.detected);
+
+      if (!result.detected) {
+        setParseError('Store not recognized. Please fill in the fields manually.');
+      }
+    } catch (error: any) {
+      setParseError(error.message || 'Failed to parse URL');
+    } finally {
+      setIsParsingUrl(false);
+    }
+  };
+
+  // Handle form submission - create product AND source together
+  const handleAddProductWithSource = async () => {
+    // Validate required fields
+    if (!newProductName.trim()) {
+      setParseError('Product name is required');
+      return;
+    }
+    if (!productUrl.trim()) {
+      setParseError('Product URL is required');
+      return;
+    }
+    if (!newStoreName.trim() || !newCssSelector.trim()) {
+      setParseError('Store name and CSS selector are required');
+      return;
+    }
+
+    try {
+      // Step 1: Create the product
+      const productResult = await onAddProduct({
+        name: newProductName.trim(),
+        identifierType,
+        identifierValue: newIdentifierValue.trim() || 'N/A'
+      });
+
+      // Step 2: Create the source linked to the new product
+      // Note: onAddProduct should return the new product, we need to find it
+      // Since we just created it, it should be the most recent one with matching name
+      const newProduct = products.find(p => p.name === newProductName.trim()) ||
+        { id: (productResult as any)?.id };
+
+      if (newProduct?.id) {
+        await onAddSource({
+          storeName: newStoreName.trim(),
+          url: productUrl.trim(),
+          cssSelector: newCssSelector.trim(),
+          productId: newProduct.id,
+          isActive: true
+        });
+      }
+
+      // Reset form
+      setProductUrl('');
+      setNewProductName('');
+      setNewIdentifierValue('');
+      setIdentifierType('EAN');
+      setNewStoreName('');
+      setNewCssSelector('');
+      setUrlDetected(false);
+      setParseError(null);
+    } catch (error: any) {
+      setParseError(error.message || 'Failed to add product');
+    }
+  };
+
+  // Legacy addProduct for backwards compatibility (without source)
   const addProduct = async () => {
     if (!newProductName || !newIdentifierValue) return;
     await onAddProduct({
@@ -206,50 +297,139 @@ const DesignView: React.FC<DesignViewProps> = ({
   return (
     <>
       <div className="space-y-8 animate-fadeIn">
-        {/* Add Product Form */}
+        {/* Add Product Form - Unified URL-First Design */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
           <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
             <i className="fas fa-plus-circle text-indigo-500"></i>
             Add New Product to Track
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="md:col-span-1">
+
+          {/* URL Input Row */}
+          <div className="flex gap-3 mb-4">
+            <div className="flex-grow relative">
+              <i className="fas fa-link absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
               <input
                 type="text"
-                placeholder="Product Name"
+                placeholder="Paste product URL here (e.g. Amazon, Best Buy, Walmart...)"
+                className="w-full border p-2 pl-9 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                value={productUrl}
+                onChange={(e) => setProductUrl(e.target.value)}
+                onBlur={handleParseUrl}
+                onKeyDown={(e) => e.key === 'Enter' && handleParseUrl()}
+              />
+            </div>
+            <button
+              onClick={handleParseUrl}
+              disabled={isParsingUrl || !productUrl.trim()}
+              className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${isParsingUrl
+                  ? 'bg-gray-200 text-gray-400 cursor-wait'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+            >
+              {isParsingUrl ? (
+                <><i className="fas fa-spinner fa-spin"></i> Analyzing...</>
+              ) : (
+                <><i className="fas fa-magic"></i> Analyze</>
+              )}
+            </button>
+          </div>
+
+          {/* Detection Status Banner */}
+          {urlDetected && (
+            <div className="bg-green-50 border border-green-200 rounded-lg px-3 py-2 mb-4 flex items-center gap-2">
+              <i className="fas fa-check-circle text-green-600"></i>
+              <span className="text-sm text-green-700">Store detected! Fields have been auto-filled. Modify if needed.</span>
+            </div>
+          )}
+
+          {/* Error Banner */}
+          {parseError && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-4 flex items-center gap-2">
+              <i className="fas fa-exclamation-triangle text-amber-600"></i>
+              <span className="text-sm text-amber-700">{parseError}</span>
+            </div>
+          )}
+
+          {/* Product Details Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Product Name</label>
+              <input
+                type="text"
+                placeholder="e.g. Sony WH-1000XM5"
                 className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
                 value={newProductName}
                 onChange={(e) => setNewProductName(e.target.value)}
               />
             </div>
-            <div className="flex gap-2 md:col-span-2">
-              <select
-                className="border p-2 rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-semibold"
-                value={identifierType}
-                onChange={(e) => setIdentifierType(e.target.value as IdentifierType)}
-              >
-                {identifierOptions.map(opt => (
-                  <option key={opt} value={opt}>{opt}</option>
-                ))}
-              </select>
+            <div className="flex gap-2">
+              <div>
+                <label className="text-xs text-gray-500 mb-1 block">ID Type</label>
+                <select
+                  className="border p-2 rounded-lg bg-gray-50 focus:ring-2 focus:ring-indigo-500 outline-none text-sm font-semibold h-[42px]"
+                  value={identifierType}
+                  onChange={(e) => setIdentifierType(e.target.value as IdentifierType)}
+                >
+                  {identifierOptions.map(opt => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex-grow">
+                <label className="text-xs text-gray-500 mb-1 block">Identifier Value</label>
+                <input
+                  type="text"
+                  placeholder={`${identifierType} Code (optional)`}
+                  className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm"
+                  value={newIdentifierValue}
+                  onChange={(e) => setNewIdentifierValue(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Source Details Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div>
+              <label className="text-xs text-gray-500 mb-1 block">Store Name</label>
               <input
                 type="text"
-                placeholder={`${identifierType} Code`}
-                className="flex-grow border p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm"
-                value={newIdentifierValue}
-                onChange={(e) => setNewIdentifierValue(e.target.value)}
+                placeholder="e.g. Amazon, Best Buy"
+                className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none"
+                value={newStoreName}
+                onChange={(e) => setNewStoreName(e.target.value)}
               />
             </div>
+            <div className="md:col-span-2">
+              <label className="text-xs text-gray-500 mb-1 block">CSS Selector</label>
+              <input
+                type="text"
+                placeholder="e.g. .price-xl, .a-price .a-offscreen"
+                className="w-full border p-2 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none font-mono text-sm"
+                value={newCssSelector}
+                onChange={(e) => setNewCssSelector(e.target.value)}
+              />
+            </div>
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-end">
             <button
-              onClick={addProduct}
-              className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-bold"
+              onClick={handleAddProductWithSource}
+              disabled={!newProductName.trim() || !productUrl.trim() || !newStoreName.trim() || !newCssSelector.trim()}
+              className={`px-6 py-2 rounded-lg font-bold transition-all flex items-center gap-2 ${!newProductName.trim() || !productUrl.trim() || !newStoreName.trim() || !newCssSelector.trim()
+                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                  : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                }`}
             >
-              Add Product
+              <i className="fas fa-plus"></i>
+              Add Product + Source
             </button>
           </div>
-          <p className="mt-2 text-xs text-gray-400">
+
+          <p className="mt-3 text-xs text-gray-400">
             <i className="fas fa-info-circle mr-1"></i>
-            Tip: Use <b>EAN</b> or <b>UPC</b> for cross-store reliability. <b>ASIN</b> is best for Amazon.
+            Paste a URL to auto-detect store and product info. All fields are editable before submission.
           </p>
         </div>
 

@@ -122,5 +122,19 @@ export const api = {
             method: 'PUT',
             body: JSON.stringify({ webhookUrl: url }),
         }),
-    }
+    },
+    url: {
+        parse: (url: string, fetchTitle: boolean = true) => fetchJson<{
+            url: string;
+            storeName: string | null;
+            cssSelector: string | null;
+            identifierType: string | null;
+            identifierValue: string | null;
+            suggestedName: string | null;
+            detected: boolean;
+        }>('/url/parse', {
+            method: 'POST',
+            body: JSON.stringify({ url, fetchTitle }),
+        }),
+    },
 };
