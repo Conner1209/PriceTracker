@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Product, Source } from '@/types';
 import PriceChart from '@/components/features/charts/PriceChart';
 
-interface PreviewViewProps {
+interface DashboardProps {
   products: Product[];
   sources: Source[];
 }
@@ -17,7 +17,7 @@ const CHART_COLORS = [
   '#dc2626', // red
 ];
 
-const PreviewView: React.FC<PreviewViewProps> = ({ products, sources }) => {
+const Dashboard: React.FC<DashboardProps> = ({ products, sources }) => {
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
 
   // Get sources for the selected product
@@ -60,8 +60,8 @@ const PreviewView: React.FC<PreviewViewProps> = ({ products, sources }) => {
                   key={p.id}
                   onClick={() => setSelectedProductId(isSelected ? null : p.id)}
                   className={`text-left p-4 rounded-lg border-2 transition-all ${isSelected
-                      ? 'border-indigo-500 bg-indigo-50'
-                      : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
+                    ? 'border-indigo-500 bg-indigo-50'
+                    : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
                     }`}
                 >
                   <div className="flex justify-between items-start">
@@ -168,4 +168,4 @@ const PreviewView: React.FC<PreviewViewProps> = ({ products, sources }) => {
   );
 };
 
-export default PreviewView;
+export default Dashboard;

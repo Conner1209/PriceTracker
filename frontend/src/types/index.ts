@@ -23,6 +23,6 @@ export interface PriceRecord {
 }
 
 export enum Tab {
-  Design = 'design',
-  Preview = 'preview'
+  Inventory = 'inventory',
+  Dashboard = 'dashboard'
 }

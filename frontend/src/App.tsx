@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { Tab } from '@/types';
 import Header from '@/components/layout/Header';
-import DesignView from '@/components/features/products/DesignView';
-import PreviewView from '@/components/features/products/PreviewView';
+import InventoryManager from '@/components/features/products/InventoryManager';
+import Dashboard from '@/components/features/products/Dashboard';
 import { useProducts } from '@/hooks/useProducts';
 import { useSources } from '@/hooks/useSources';
 import { api } from '@/services/api';
 
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<Tab>(Tab.Design);
+  const [activeTab, setActiveTab] = useState<Tab>(Tab.Inventory);
   const { products, addProduct, removeProduct, loading: productsLoading } = useProducts();
   const { sources, addSource, removeSource, loading: sourcesLoading } = useSources();
 
@@ -31,8 +31,8 @@ const App: React.FC = () => {
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
 
       <main className="flex-grow container mx-auto px-4 py-8 max-w-6xl">
-        {activeTab === Tab.Design && (
-          <DesignView
+        {activeTab === Tab.Inventory && (
+          <InventoryManager
             products={products}
             onAddProduct={addProduct}
             onRemoveProduct={removeProduct}
@@ -43,8 +43,8 @@ const App: React.FC = () => {
           />
         )}
 
-        {activeTab === Tab.Preview && (
-          <PreviewView products={products} sources={sources} />
+        {activeTab === Tab.Dashboard && (
+          <Dashboard products={products} sources={sources} />
         )}
       </main>
 

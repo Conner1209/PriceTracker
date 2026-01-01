@@ -17,7 +17,7 @@ const STORE_PRESETS = [
   { name: 'eBay', selector: '.x-price-primary span' },
 ];
 
-interface DesignViewProps {
+interface InventoryManagerProps {
   products: Product[];
   onAddProduct: (product: any) => Promise<{ id: string }>;
   onRemoveProduct: (id: string) => Promise<void>;
@@ -27,7 +27,7 @@ interface DesignViewProps {
   onScrapeSource: (sourceId: string) => Promise<{ price: number }>;
 }
 
-const DesignView: React.FC<DesignViewProps> = ({
+const InventoryManager: React.FC<InventoryManagerProps> = ({
   products,
   onAddProduct,
   onRemoveProduct,
@@ -670,4 +670,4 @@ const DesignView: React.FC<DesignViewProps> = ({
   );
 };
 
-export default DesignView;
+export default InventoryManager;
